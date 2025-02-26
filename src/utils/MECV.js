@@ -11,67 +11,158 @@ export const MECV = {
           items: [
             {
               id: "tos",
-              title: "TOS",
-              values: ["", "Sí", "No"]
+              title: "Tos",
+              group: "Alteraciones o signos de seguridad",
+              type: "checkbox",
             },
             {
               id: "cambio_voz",
               title: "Cambio de voz",
-              values: ["", "Sí", "No"]
+              group: "Alteraciones o signos de seguridad",
+              type: "checkbox",
             },
             {
               id: "desaturacion",
               title: "Desaturación de oxígeno",
-              values: ["", "Sí", "No"]
-            }
+              group: "Alteraciones o signos de seguridad",
+              type: "checkbox",
+            },
+            {
+              id: "sello_labial",
+              title: "Sello labial",
+              group: "Alteraciones o signos de eficacia",
+              type: "checkbox",
+            },
+            {
+              id: "residuo_oral",
+              title: "Residuo oral",
+              group: "Alteraciones o signos de eficacia",
+              type: "checkbox",
+            },
+            {
+              id: "deglucion_fraccionada",
+              title: "Deglución fraccionada",
+              group: "Alteraciones o signos de eficacia",
+              type: "checkbox",
+            },
+            {
+              id: "residuo_faringeo",
+              title: "Residuo faríngeo",
+              group: "Alteraciones o signos de eficacia",
+              type: "checkbox",
+            },
           ],
-          volumes: ["5ml", "10ml", "20ml"]
+          volumes: ["5ml", "10ml", "20ml"],
         },
         {
           id: 1.2,
           title: "Líquido",
           items: [
             {
-              id: "tos",
-              title: "TOS",
-              values: ["", "Sí", "No"]
+              id: "signos_seguridad",
+              title: "Alteraciones o signos de seguridad",
+              items: [
+                {
+                  id: "tos",
+                  title: "Tos",
+                  values: ["", "Sí", "No"],
+                },
+                {
+                  id: "cambio_voz",
+                  title: "Cambio de voz",
+                  values: ["", "Sí", "No"],
+                },
+                {
+                  id: "desaturacion",
+                  title: "Desaturación de oxígeno",
+                  values: ["", "Sí", "No"],
+                },
+              ],
             },
             {
-              id: "cambio_voz",
-              title: "Cambio de voz",
-              values: ["", "Sí", "No"]
+              id: "signos_eficacia",
+              title: "Alteraciones o signos de eficacia",
+              items: [
+                {
+                  id: "sello_labial",
+                  title: "Sello labial",
+                  values: ["", "Sí", "No"],
+                },
+                {
+                  id: "residuo_oral",
+                  title: "Residuo oral",
+                  values: ["", "Sí", "No"],
+                },
+                {
+                  id: "deglucion_fraccionada",
+                  title: "Deglución fraccionada",
+                  values: ["", "Sí", "No"],
+                },
+                {
+                  id: "residuo_faringeo",
+                  title: "Residuo faríngeo",
+                  values: ["", "Sí", "No"],
+                },
+              ],
             },
-            {
-              id: "desaturacion",
-              title: "Desaturación de oxígeno",
-              values: ["", "Sí", "No"]
-            }
           ],
-          volumes: ["5ml", "10ml", "20ml"]
+          volumes: ["5ml", "10ml", "20ml"],
         },
         {
           id: 1.3,
           title: "Pudding",
           items: [
             {
-              id: "tos",
-              title: "TOS",
-              values: ["", "Sí", "No"]
+              id: "signos_seguridad",
+              title: "Alteraciones o signos de seguridad",
+              items: [
+                {
+                  id: "tos",
+                  title: "Tos",
+                  values: ["", "Sí", "No"],
+                },
+                {
+                  id: "cambio_voz",
+                  title: "Cambio de voz",
+                  values: ["", "Sí", "No"],
+                },
+                {
+                  id: "desaturacion",
+                  title: "Desaturación de oxígeno",
+                  values: ["", "Sí", "No"],
+                },
+              ],
             },
             {
-              id: "cambio_voz",
-              title: "Cambio de voz",
-              values: ["", "Sí", "No"]
+              id: "signos_eficacia",
+              title: "Alteraciones o signos de eficacia",
+              items: [
+                {
+                  id: "sello_labial",
+                  title: "Sello labial",
+                  values: ["", "Sí", "No"],
+                },
+                {
+                  id: "residuo_oral",
+                  title: "Residuo oral",
+                  values: ["", "Sí", "No"],
+                },
+                {
+                  id: "deglucion_fraccionada",
+                  title: "Deglución fraccionada",
+                  values: ["", "Sí", "No"],
+                },
+                {
+                  id: "residuo_faringeo",
+                  title: "Residuo faríngeo",
+                  values: ["", "Sí", "No"],
+                },
+              ],
             },
-            {
-              id: "desaturacion",
-              title: "Desaturación de oxígeno",
-              values: ["", "Sí", "No"]
-            }
           ],
-          volumes: ["5ml", "10ml", "20ml"]
-        }
-      ]
+          volumes: ["5ml", "10ml", "20ml"],
+        },
+      ],
     },
     {
       id: 2,
@@ -80,9 +171,9 @@ export const MECV = {
         {
           id: "evaluacion_final",
           title: "Evaluación Final",
-          type: "textarea"
-        }
-      ]
+          type: "textarea",
+        },
+      ],
     },
     {
       id: 3,
@@ -91,9 +182,9 @@ export const MECV = {
         {
           id: "recomendacion_dietetica",
           title: "Recomendación Dietética",
-          type: "textarea"
-        }
-      ]
+          type: "textarea",
+        },
+      ],
     },
     {
       id: 4,
@@ -106,19 +197,19 @@ export const MECV = {
             {
               id: "liquido",
               title: "Líquido",
-              type: "checkbox"
+              type: "checkbox",
             },
             {
               id: "nectar",
               title: "Néctar",
-              type: "checkbox"
+              type: "checkbox",
             },
             {
               id: "pudding",
               title: "Pudding",
-              type: "checkbox"
-            }
-          ]
+              type: "checkbox",
+            },
+          ],
         },
         {
           id: 4.2,
@@ -127,21 +218,21 @@ export const MECV = {
             {
               id: "bajo",
               title: "Bajo",
-              type: "checkbox"
+              type: "checkbox",
             },
             {
               id: "medio",
               title: "Medio",
-              type: "checkbox"
+              type: "checkbox",
             },
             {
               id: "alto",
               title: "Alto",
-              type: "checkbox"
-            }
-          ]
-        }
-      ]
-    }
-  ]
+              type: "checkbox",
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };

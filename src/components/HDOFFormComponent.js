@@ -16,27 +16,6 @@ export function HDOFFormComponent({ data }) {
     }
   }, []);
 
-  const handleBlur = (e) => {
-    if (e.target.name === "nombre" && e.target.value) {
-      setCurrentUser(e.target.value);
-      const form = e.target.form;
-      if (!form) return;
-
-      const formData = new FormData(form);
-      processAndSaveForm(formData, e.target.value);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    if (e.target.name === "nombre") return;
-
-    const form = e.target.form;
-    if (!form || !currentUser) return;
-
-    const formData = new FormData(form);
-    processAndSaveForm(formData, currentUser);
-  };
-
   const handleDownload = (e) => {
     e.preventDefault();
     if (!currentUser) {
@@ -61,7 +40,7 @@ export function HDOFFormComponent({ data }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `hdof_${initials}.json`; // Using initials here
+    a.download = `hdof_${initials}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -78,44 +57,98 @@ export function HDOFFormComponent({ data }) {
       evaluacion: {},
     };
 
-    data.secciones.forEach((seccion) => {
-      result.evaluacion[seccion.id] = {};
+    if (data?.secciones) {
+      data.secciones.forEach((seccion) => {
+        if (!seccion) return;
+        result.evaluacion[seccion.id] = {};
 
-      if (seccion.subsecciones) {
-        seccion.subsecciones.forEach((subseccion) => {
-          const subseccionData = {};
+        if (seccion.subsecciones) {
+          seccion.subsecciones.forEach((subseccion) => {
+            if (!subseccion || !subseccion.items) return;
+            const subseccionData = {};
 
-          subseccion.items.forEach((item) => {
-            if (item.subsections) {
-              const subsectionsData = {};
-              item.subsections.forEach((sub) => {
-                const value = formData.get(
-                  `${subseccion.id}-${item.id}-${sub.id}`
+            subseccion.items.forEach((item) => {
+              if (!item) return;
+
+              // Handle conditional subsections
+              if (item.conditionalSubsections) {
+                const conditionKey = Object.keys(
+                  item.conditionalSubsections
+                )[0];
+                const conditionalData = {};
+
+                item.conditionalSubsections[conditionKey]?.forEach(
+                  (subItem) => {
+                    const value = formData.get(
+                      `${subseccion.id}-${item.id}-${subItem.id}`
+                    );
+                    if (value) {
+                      conditionalData[subItem.id] = value;
+                    }
+                  }
                 );
-                if (value) subsectionsData[sub.id] = value;
-              });
-              if (Object.keys(subsectionsData).length > 0) {
-                subseccionData[item.id] = subsectionsData;
+
+                if (Object.keys(conditionalData).length > 0) {
+                  subseccionData[item.id] = {
+                    ...subseccionData[item.id],
+                    ...conditionalData,
+                  };
+                }
               }
-            } else {
-              const value = formData.get(`${subseccion.id}-${item.id}`);
-              if (value) subseccionData[item.id] = value;
+
+              // Handle regular fields
+              if (item.subsections) {
+                const subsectionsData = {};
+                item.subsections.forEach((sub) => {
+                  if (!sub) return;
+                  if (sub.type === "checkbox") {
+                    const checked = formData.getAll(
+                      `${subseccion.id}-${item.id}-${sub.id}`
+                    );
+                    if (checked.length > 0) {
+                      subsectionsData[sub.id] = checked;
+                    }
+                    const description = formData.get(
+                      `${subseccion.id}-${item.id}-${sub.id}-description`
+                    );
+                    if (description) {
+                      subsectionsData[`${sub.id}_description`] = description;
+                    }
+                  } else {
+                    const value = formData.get(
+                      `${subseccion.id}-${item.id}-${sub.id}`
+                    );
+                    if (value) subsectionsData[sub.id] = value;
+                  }
+                });
+                if (Object.keys(subsectionsData).length > 0) {
+                  subseccionData[item.id] = subsectionsData;
+                }
+              } else if (item.type === "checkbox") {
+                const checked = formData.getAll(`${subseccion.id}-${item.id}`);
+                if (checked.length > 0) {
+                  subseccionData[item.id] = checked;
+                }
+              } else {
+                const value = formData.get(`${subseccion.id}-${item.id}`);
+                if (value) subseccionData[item.id] = value;
+              }
+            });
+
+            if (Object.keys(subseccionData).length > 0) {
+              result.evaluacion[seccion.id][subseccion.id] = subseccionData;
             }
           });
-
-          if (Object.keys(subseccionData).length > 0) {
-            result.evaluacion[seccion.id][subseccion.id] = subseccionData;
-          }
-        });
-      }
-    });
+        }
+      });
+    }
 
     // Process anexos if they exist
-    if (data.anexos) {
+    if (data?.anexos) {
       result.anexos = {};
       data.anexos.forEach((anexo) => {
         const anexoData = {};
-        anexo.items.forEach((item) => {
+        anexo.items?.forEach((item) => {
           if (item.items) {
             const itemsData = {};
             item.items.forEach((subItem) => {
@@ -141,11 +174,58 @@ export function HDOFFormComponent({ data }) {
     }
   };
 
+  const handleBlur = (e) => {
+    if (e.target.name === "nombre" && e.target.value) {
+      setCurrentUser(e.target.value);
+      const form = e.target.form;
+      if (!form) return;
+
+      const formData = new FormData(form);
+      processAndSaveForm(formData, e.target.value);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    if (e.target.name === "nombre") return;
+
+    const form = e.target.form;
+    if (!form || !currentUser) return;
+
+    const formData = new FormData(form);
+    processAndSaveForm(formData, currentUser);
+
+    // Trigger re-render to update conditional sections
+    setFormData((prevData) => ({ ...prevData }));
+  };
   const renderItems = (items, sectionId, subsectionId = null) => {
     if (!items) return null; // Add safety check
 
     return items.map((item) => {
       if (!item) return null; // Add safety check for individual items
+
+      // Check for conditional subsections
+      const shouldShowConditional = () => {
+        if (item.conditionalSubsections) {
+          const savedData = localStorage.getItem(`hdof_${currentUser}`);
+          if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            const conditionKey = Object.keys(item.conditionalSubsections)[0];
+
+            if (conditionKey === "Disfuncional") {
+              const disfuncionalValue =
+                parsedData?.evaluacion?.competencia_lingual?.deglucion
+                  ?.caracteristicas_deglucion;
+              return disfuncionalValue === "Disfuncional";
+            }
+            if (conditionKey === "Combinado o mixto") {
+              const planValue =
+                parsedData?.evaluacion?.conclusion?.indicacion?.plan;
+              return planValue?.includes("Combinado o mixto");
+            }
+          }
+        }
+        return false;
+      };
 
       return (
         <div key={item.id} className="mb-4">
@@ -158,24 +238,53 @@ export function HDOFFormComponent({ data }) {
             )}
           </label>
           {item.subsections ? (
-            <div className="space-y-2 ml-4">
-              {item.subsections?.map((sub) => {
-                if (!sub) return null; // Add safety check for subsections
+            <div className="space-y-4 ml-4">
+              {item.subsections.map((sub) => {
+                if (!sub) return null;
+
                 return (
-                  <div key={sub.id} className="flex items-center">
-                    <span className="mr-2">{sub.title}:</span>
-                    <select
-                      name={`${subsectionId || sectionId}-${item.id}-${sub.id}`}
-                      className="border rounded p-1"
-                      onChange={handleInputChange}
-                    >
-                      <option value="">Seleccionar</option>
-                      {sub.values?.map((value) => (
-                        <option key={value} value={value}>
-                          {value}
-                        </option>
-                      ))}
-                    </select>
+                  <div key={sub.id} className="flex flex-col space-y-2">
+                    <div className="flex items-center">
+                      {sub.type === "checkbox" ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              name={`${subsectionId}-${item.id}-${sub.id}`}
+                              value={sub.values[0]}
+                              onChange={handleInputChange}
+                              className="mr-2"
+                            />
+                            <span>{sub.title}</span>
+                          </div>
+                          {sub.description && (
+                            <textarea
+                              name={`${subsectionId}-${item.id}-${sub.id}-description`}
+                              className="w-full p-2 border rounded-md mt-2"
+                              placeholder={sub.description.placeholder}
+                              rows="3"
+                              onChange={handleInputChange}
+                            />
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          <span className="mr-2">{sub.title}:</span>
+                          <select
+                            name={`${subsectionId}-${item.id}-${sub.id}`}
+                            className="border rounded p-1"
+                            onChange={handleInputChange}
+                          >
+                            <option value="">Seleccionar</option>
+                            {sub.values?.map((value) => (
+                              <option key={value} value={value}>
+                                {value}
+                              </option>
+                            ))}
+                          </select>
+                        </>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -187,7 +296,7 @@ export function HDOFFormComponent({ data }) {
               onChange={handleInputChange}
             >
               <option value="">Seleccionar</option>
-              {item.values?.map((value) => (
+              {item.values.map((value) => (
                 <option key={value} value={value}>
                   {value}
                 </option>
@@ -201,16 +310,46 @@ export function HDOFFormComponent({ data }) {
               onChange={handleInputChange}
             />
           )}
-          {item.note && (
-            <span className="block text-sm text-gray-600 mt-1">
-              {item.note}
-            </span>
+          {/* Render conditional subsections if they exist and condition is met */}
+          {item.conditionalSubsections && shouldShowConditional() && (
+            <div className="mt-4 ml-4">
+              {(
+                item.conditionalSubsections[
+                  Object.keys(item.conditionalSubsections)[0]
+                ] || []
+              ).map((subItem) => (
+                <div key={subItem.id} className="mb-4">
+                  <label className="block mb-2">{subItem.title}</label>
+                  {subItem.type === "textarea" ? (
+                    <textarea
+                      name={`${subsectionId}-${item.id}-${subItem.id}`}
+                      className="w-full p-2 border rounded-md"
+                      rows={subItem.rows || 3}
+                      placeholder={subItem.placeholder || ""}
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <select
+                      name={`${subsectionId}-${item.id}-${subItem.id}`}
+                      className="w-full p-2 border rounded-md"
+                      onChange={handleInputChange}
+                    >
+                      <option value="">Seleccionar</option>
+                      {(subItem.values || []).map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       );
     });
   };
-
   const renderAnexos = () => {
     if (!data?.anexos) return null;
 
@@ -315,6 +454,7 @@ export function HDOFFormComponent({ data }) {
               patologiasInput.value = parsedData.personalInfo.patologias || "";
 
             // Fill evaluation fields
+            // Update the handleUserSelect function to handle conditional fields
             if (parsedData.evaluacion) {
               Object.entries(parsedData.evaluacion).forEach(
                 ([sectionId, sectionData]) => {
@@ -322,21 +462,45 @@ export function HDOFFormComponent({ data }) {
                     ([subsectionId, subsectionData]) => {
                       Object.entries(subsectionData).forEach(
                         ([itemId, itemValue]) => {
-                          if (typeof itemValue === "object") {
-                            // Handle nested subsections
+                          if (
+                            typeof itemValue === "object" &&
+                            !Array.isArray(itemValue)
+                          ) {
+                            // Handle nested objects (including conditional subsections)
                             Object.entries(itemValue).forEach(
-                              ([subId, value]) => {
+                              ([subId, subValue]) => {
                                 const input = form.querySelector(
                                   `[name="${subsectionId}-${itemId}-${subId}"]`
                                 );
-                                if (input) input.value = value;
+                                if (input) {
+                                  if (input.type === "checkbox") {
+                                    input.checked = true;
+                                  } else if (input.tagName === "TEXTAREA") {
+                                    input.value = subValue;
+                                  } else if (input.tagName === "SELECT") {
+                                    input.value = subValue;
+                                  }
+                                }
                               }
                             );
                           } else {
+                            // Handle direct values
                             const input = form.querySelector(
                               `[name="${subsectionId}-${itemId}"]`
                             );
-                            if (input) input.value = itemValue;
+                            if (input) {
+                              if (Array.isArray(itemValue)) {
+                                // Handle checkbox arrays
+                                itemValue.forEach((val) => {
+                                  const checkbox = form.querySelector(
+                                    `[name="${subsectionId}-${itemId}"][value="${val}"]`
+                                  );
+                                  if (checkbox) checkbox.checked = true;
+                                });
+                              } else {
+                                input.value = itemValue;
+                              }
+                            }
                           }
                         }
                       );
@@ -443,11 +607,11 @@ export function HDOFFormComponent({ data }) {
 
         <div className="flex gap-4">
           <button
-            type="submit"
+            type="button" // Change from type="submit" to type="button"
             onClick={handleDownload}
             className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
           >
-            Guardar Evaluación
+            Descargar Evaluación
           </button>
         </div>
       </form>
